@@ -14,7 +14,7 @@ import org.springframework.stereotype.Service;
 public class AuthServiceImpl implements AuthService {
 
 
-   private final UserDetailsManager manager;
+    private final UserDetailsManager manager;
 
     private final PasswordEncoder encoder;
 
