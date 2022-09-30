@@ -61,7 +61,7 @@ public class UserServiceImpl implements UserService {
     public UserDto updateUser(UserDto userDTO) {
         log.info("Request for updating user");
         Optional<WebSiteUser> optionalWebSiteUser = userRepository.findWebSiteUserById(userDTO.getId());
-        if (!optionalWebSiteUser.isPresent()) {
+        if (optionalWebSiteUser.isEmpty()) {
             return  null;
         } else {
             WebSiteUser siteUser = UserMapper.INSTANCE.userDtoToSiteUser(userDTO);
@@ -74,11 +74,12 @@ public class UserServiceImpl implements UserService {
     public NewPasswordDto setPassword(NewPasswordDto password) {
         log.info("Request for change password");
         Optional<CreateUser> userOptional = createUserRepository.findCreateUserByPassword(password.getCurrentPassword());
-        if (!userOptional.isPresent()) {
+        if (userOptional.isEmpty()) {
             return null;
         } else {
             CreateUser result = userOptional.get();
             result.setPassword(password.getNewPassword());
+            createUserRepository.save(result);
             return password;
         }
     }
