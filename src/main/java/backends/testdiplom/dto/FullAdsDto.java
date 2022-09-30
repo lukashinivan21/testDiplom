@@ -1,8 +1,10 @@
 package backends.testdiplom.dto;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
-@Data
+@Getter
+@Setter
 public class FullAdsDto {
 
     private Integer pk;

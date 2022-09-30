@@ -4,7 +4,6 @@ import backends.testdiplom.dto.LoginReq;
 import backends.testdiplom.dto.RegisterReq;
 import backends.testdiplom.dto.Role;
 import backends.testdiplom.service.AuthService;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,10 +17,13 @@ import static backends.testdiplom.dto.Role.USER;
 @Slf4j
 @CrossOrigin(value = "http://localhost:3000")
 @RestController
-@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthService authService;
+
+    public AuthController(AuthService authService) {
+        this.authService = authService;
+    }
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody LoginReq req) {

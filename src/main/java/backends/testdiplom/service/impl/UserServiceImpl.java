@@ -4,57 +4,89 @@ import backends.testdiplom.dto.CreateUserDto;
 import backends.testdiplom.dto.NewPasswordDto;
 import backends.testdiplom.dto.ResponseWrapperDto;
 import backends.testdiplom.dto.UserDto;
+import backends.testdiplom.entities.CreateUser;
+import backends.testdiplom.entities.WebSiteUser;
+import backends.testdiplom.mappers.CreateUserMapper;
+import backends.testdiplom.mappers.UserMapper;
+import backends.testdiplom.repositories.CreateUserRepository;
+import backends.testdiplom.repositories.WebSiteUserRepository;
 import backends.testdiplom.service.UserService;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+
 
 @Service
-@Slf4j
 public class UserServiceImpl implements UserService {
+
+    private static final Logger log = org.slf4j.LoggerFactory.getLogger(UserServiceImpl.class);
+    private final WebSiteUserRepository userRepository;
+    private final CreateUserRepository createUserRepository;
+    private final CreateUserMapper userMapper;
+
+    public UserServiceImpl(WebSiteUserRepository userRepository, CreateUserRepository createUserRepository,
+                           CreateUserMapper userMapper) {
+        this.userRepository = userRepository;
+        this.createUserRepository = createUserRepository;
+        this.userMapper = userMapper;
+    }
 
     @Override
     public CreateUserDto addUser(CreateUserDto user) {
-        CreateUserDto createUser = new CreateUserDto();
-        createUser.setFirstName(user.getFirstName());
-        createUser.setLastName(user.getLastName());
-        createUser.setEmail(user.getEmail());
-        createUser.setPhone(user.getPhone());
-        createUser.setPassword(user.getPassword());
-        return createUser;
+        log.info("Addition createUser with firstname {}; with lastname {}; with phone {}; with email {}", user.getFirstName(), user.getLastName(),
+                user.getPhone(), user.getEmail());
+        CreateUser createUser = userMapper.createUserDtoToCreateUser(user);
+        CreateUser result = createUserRepository.save(createUser);
+        return userMapper.createUserToCreateUserDto(result);
     }
 
     @Override
     public ResponseWrapperDto<UserDto> getUsers() {
-        List<UserDto> list = new ArrayList<>();
-        list.add(new UserDto());
-        Integer count = list.size();
-        ResponseWrapperDto<UserDto> response = new ResponseWrapperDto<>();
-        response.setCount(count);
-        response.setList(list);
-        return response;
+        log.info("Request for getting list of all users");
+        List<WebSiteUser> siteUsers = userRepository.findAll();
+        List<UserDto> result = new ArrayList<>();
+        for (WebSiteUser siteUser : siteUsers) {
+            result.add(UserMapper.INSTANCE.userToUserDto(siteUser));
+        }
+        ResponseWrapperDto<UserDto> responseWrapperDto = new ResponseWrapperDto<>();
+        responseWrapperDto.setCount(result.size());
+        responseWrapperDto.setList(result);
+        return responseWrapperDto;
     }
 
     @Override
     public UserDto updateUser(UserDto userDTO) {
-        return userDTO;
+        log.info("Request for updating user");
+        Optional<WebSiteUser> optionalWebSiteUser = userRepository.findWebSiteUserById(userDTO.getId());
+        if (!optionalWebSiteUser.isPresent()) {
+            return  null;
+        } else {
+            WebSiteUser siteUser = UserMapper.INSTANCE.userDtoToSiteUser(userDTO);
+            WebSiteUser result = userRepository.save(siteUser);
+            return UserMapper.INSTANCE.userToUserDto(result);
+        }
     }
 
     @Override
     public NewPasswordDto setPassword(NewPasswordDto password) {
-        return password;
+        log.info("Request for change password");
+        Optional<CreateUser> userOptional = createUserRepository.findCreateUserByPassword(password.getCurrentPassword());
+        if (!userOptional.isPresent()) {
+            return null;
+        } else {
+            CreateUser result = userOptional.get();
+            result.setPassword(password.getNewPassword());
+            return password;
+        }
     }
 
     @Override
     public UserDto getUser(Integer id) {
-        UserDto userDTO = new UserDto();
-        userDTO.setFirstName("John");
-        userDTO.setLastName("Cage");
-        userDTO.setPhone("145");
-        userDTO.setEmail("johnyCage@gmail.com");
-        userDTO.setId(id);
-        return userDTO;
+        log.info("Request for getting info about user with id {}", id);
+        Optional<WebSiteUser> siteUser = userRepository.findWebSiteUserById(id);
+        return siteUser.map(UserMapper.INSTANCE::userToUserDto).orElse(null);
     }
 }
